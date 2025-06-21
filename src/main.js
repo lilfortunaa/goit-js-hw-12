@@ -37,15 +37,6 @@ async function handleSubmit(event) {
     return;
   }
 
-  if (request.length < 3) {
-    iziToast.error({
-      title: 'Error',
-      message: 'Search term must be at least 3 characters long!',
-      position: 'topRight',
-    });
-    return;
-  }
-
   query = request;
   page = 1;
   loadedHits = 0;
@@ -54,14 +45,13 @@ async function handleSubmit(event) {
   hideLoadMoreButton();
   showLoader();
 
-  const MIN_LOADER_TIME = 1000;
-  const startTime = Date.now();
-
   try {
     const data = await getImagesByQuery(query, page);
 
     totalHits = data.totalHits;
     loadedHits = data.hits.length;
+
+    hideLoader();
 
     if (data.hits.length === 0) {
       iziToast.error({
@@ -69,27 +59,20 @@ async function handleSubmit(event) {
         message: 'No images found. Please try again!',
         position: 'topRight',
       });
-      hideLoader();
       return;
     }
 
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(MIN_LOADER_TIME - elapsed, 0);
+    createGallery(data.hits);
 
-    setTimeout(() => {
-      hideLoader();
-      createGallery(data.hits);
-
-      if (loadedHits < totalHits) {
-        showLoadMoreButton();
-      } else {
-        iziToast.info({
-          title: 'End of Results',
-          message: 'You have reached the end of search results.',
-          position: 'topRight',
-        });
-      }
-    }, delay);
+    if (loadedHits < totalHits) {
+      showLoadMoreButton();
+    } else {
+      iziToast.info({
+        title: 'End of Results',
+        message: 'You have reached the end of search results.',
+        position: 'topRight',
+      });
+    }
   } catch (error) {
     iziToast.error({
       title: 'Error',
